@@ -4,6 +4,7 @@ import type {
   ClassTier,
   DestinyResult,
   MBTIType,
+  StatName,
   PersonalityProfile,
   Rank,
   Region,
@@ -13,6 +14,7 @@ import type {
   ChineseZodiac,
 } from '@/types/game';
 import { CLASS_DATABASE } from '@/data/classes';
+import { SUBCLASS_DATABASE } from '@/data/subclasses';
 import { getStatMultiplier, RANKS } from '@/systems/rankSystem';
 
 // Seeded random number generator for reproducibility
@@ -27,7 +29,7 @@ function seededRandom(seed: string): () => number {
   };
 }
 
-interface DestinyInput {
+export interface DestinyInput {
   personality: PersonalityProfile;
   mbti: MBTIType;
   mbtiDimensions: { ei: number; sn: number; tf: number; jp: number };
@@ -35,37 +37,48 @@ interface DestinyInput {
   chineseZodiac: ChineseZodiac | null;
   birthMonth: number;
   birthDay: number;
+  birthYear: number;
   favoriteColor: string;
 }
 
 export function generateDestiny(input: DestinyInput): DestinyResult {
   // Create a seed from all inputs for reproducible "fate"
-  const seedStr = `${input.mbti}-${input.zodiac || 'none'}-${input.chineseZodiac || 'none'}-${input.birthMonth}-${input.birthDay}-${input.favoriteColor}-${JSON.stringify(input.personality)}`;
+  const seedStr = `${input.mbti}-${input.zodiac || 'none'}-${input.chineseZodiac || 'none'}-${input.birthMonth}-${input.birthDay}-${input.birthYear}-${input.favoriteColor}-${JSON.stringify(input.personality)}`;
   const rng = seededRandom(seedStr);
 
   // Step 1: Determine Class
   const classId = selectClass(input, rng);
   const classDef = CLASS_DATABASE.find(c => c.id === classId)!;
 
-  // Step 2: Determine Rank
+  // Step 2: Determine personality subclass
+  const subclassCandidates = getTopSubclassCandidates(input.personality).map((subclass) => subclass.id);
+  const subclassId = subclassCandidates[0];
+
+  // Step 3: Determine Rank
   const rank = selectRank(input, rng, classDef.tier);
 
-  // Step 3: Generate Stats
+  // Step 4: Generate Stats
   const stats = generateStats(input.personality, classDef, rank, rng);
 
-  // Step 4: Determine Region
+  // Step 5: Determine Region
   const region = selectRegion(input, rng);
 
-  // Step 5: Determine Story Arc
+  // Step 6: Determine Story Arc
   const storyArc = selectStoryArc(input, rng);
 
-  // Step 6: Generate Reputation
+  // Step 7: Generate Reputation
   const reputation = generateReputation(input.personality, region);
 
   return {
     classId,
+    classCandidates: getTopClassCandidates(input).map((candidate) => candidate.id),
+    subclassId,
+    subclassCandidates,
     rank,
     stats,
+    zodiac: input.zodiac as ZodiacSign,
+    chineseZodiac: input.chineseZodiac as ChineseZodiac,
+    birthYear: input.birthYear,
     region,
     storyArc,
     personality: input.personality,
@@ -75,9 +88,70 @@ export function generateDestiny(input: DestinyInput): DestinyResult {
   };
 }
 
+function getAffinityScore(input: DestinyInput, cls: ClassDefinition): number {
+  let score = 0;
+
+  for (const stat of cls.primaryStats) {
+    score += getStatPersonalityScore(stat, input.personality);
+  }
+  for (const stat of cls.secondaryStats) {
+    score += getStatPersonalityScore(stat, input.personality) * 0.5;
+  }
+
+  score += getMBTIClassAffinity(input.mbti, cls) * 3;
+  if (input.zodiac) score += getZodiacClassAffinity(input.zodiac, cls) * 2;
+
+  return score;
+}
+
+export function getTopClassCandidates(input: DestinyInput): ClassDefinition[] {
+  const compatibleClasses = CLASS_DATABASE.filter((cls) => getClassMBTIAffinities(cls).includes(input.mbti));
+  const roster = compatibleClasses.length >= 3 ? compatibleClasses : CLASS_DATABASE;
+
+  return roster
+    .map((cls, index) => ({ cls, score: getAffinityScore(input, cls), index }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .slice(0, 3)
+    .map(({ cls }) => cls);
+}
+
+export function applyClassSelection(result: DestinyResult, classId: string): DestinyResult {
+  const classDef = CLASS_DATABASE.find((candidate) => candidate.id === classId);
+  if (!classDef) return result;
+
+  const seed = `${classId}-${result.mbti}-${result.rank}-${JSON.stringify(result.personality)}`;
+  const stats = generateStats(result.personality, classDef, result.rank, seededRandom(seed));
+
+  return { ...result, classId, stats };
+}
+
+function getSubclassAffinityScore(personality: PersonalityProfile, subclass: typeof SUBCLASS_DATABASE[number]): number {
+  return Object.entries(subclass.personalityWeights).reduce(
+      (total, [trait, weight]) =>
+        total + personality[trait as keyof PersonalityProfile] * (weight || 0),
+      0,
+    );
+}
+
+export function getTopSubclassCandidates(personality: PersonalityProfile) {
+  return SUBCLASS_DATABASE
+    .map((subclass, index) => ({ subclass, score: getSubclassAffinityScore(personality, subclass), index }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .slice(0, 3)
+    .map(({ subclass }) => subclass);
+}
+
+export function applySubclassSelection(result: DestinyResult, subclassId: string): DestinyResult {
+  const classExists = CLASS_DATABASE.some((classDef) => classDef.id === subclassId);
+  const subclassExists = SUBCLASS_DATABASE.some((subclass) => subclass.id === subclassId);
+  return classExists || subclassExists ? { ...result, subclassId } : result;
+}
+
 function selectClass(input: DestinyInput, rng: () => number): string {
   // Score each class based on personality-MBTI alignment
-  const scored = CLASS_DATABASE.map(cls => {
+  const compatibleClasses = CLASS_DATABASE.filter((cls) => getClassMBTIAffinities(cls).includes(input.mbti));
+  const roster = compatibleClasses.length ? compatibleClasses : CLASS_DATABASE;
+  const scored = roster.map(cls => {
     let score = 0;
 
     // Primary stat alignment with personality
@@ -113,17 +187,21 @@ function selectClass(input: DestinyInput, rng: () => number): string {
 
   scored.sort((a, b) => b.score - a.score);
 
-  // Pick from top 3 with weighted random
-  const top3 = scored.slice(0, 3);
-  const totalScore = top3.reduce((s, c) => s + c.score, 0);
+  // Pick from the full roster with weighted random. Every class remains
+  // assignable, while personality, MBTI, zodiac, and tier still shape odds.
+  const weightedRoster = scored.map((entry) => ({
+    ...entry,
+    score: Math.max(0.1, entry.score),
+  }));
+  const totalScore = weightedRoster.reduce((s, c) => s + c.score, 0);
   let roll = rng() * totalScore;
 
-  for (const entry of top3) {
+  for (const entry of weightedRoster) {
     roll -= entry.score;
     if (roll <= 0) return entry.classId;
   }
 
-  return top3[0].classId;
+  return weightedRoster[0].classId;
 }
 
 function getStatPersonalityScore(stat: string, profile: PersonalityProfile): number {
@@ -142,6 +220,44 @@ function getStatPersonalityScore(stat: string, profile: PersonalityProfile): num
 
   const traits = mappings[stat] || [];
   return traits.reduce((sum, t) => sum + (profile[t] || 5), 0) / traits.length;
+}
+
+const MBTI_TYPES: MBTIType[] = [
+  'INTJ', 'INTP', 'ENTJ', 'ENTP', 'INFJ', 'INFP', 'ENFJ', 'ENFP',
+  'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ', 'ISTP', 'ISFP', 'ESTP', 'ESFP',
+];
+
+const MBTI_STAT_PROFILES: Record<MBTIType, Partial<Record<StatName, number>>> = {
+  INTJ: { intelligence: 5, wisdom: 4, perception: 3, dexterity: 1 },
+  INTP: { intelligence: 5, wisdom: 3, dexterity: 2, luck: 1 },
+  ENTJ: { strength: 4, charisma: 4, intelligence: 3, endurance: 2 },
+  ENTP: { intelligence: 4, agility: 3, charisma: 3, luck: 2 },
+  INFJ: { wisdom: 5, charisma: 3, vitality: 3, perception: 2 },
+  INFP: { charisma: 4, wisdom: 4, agility: 3, luck: 2 },
+  ENFJ: { charisma: 5, vitality: 3, strength: 2, wisdom: 2 },
+  ENFP: { charisma: 4, agility: 4, luck: 3, perception: 2 },
+  ISTJ: { endurance: 5, vitality: 4, strength: 3, perception: 2 },
+  ISFJ: { vitality: 5, endurance: 4, wisdom: 3, charisma: 2 },
+  ESTJ: { strength: 4, endurance: 4, charisma: 3, vitality: 2 },
+  ESFJ: { charisma: 5, vitality: 4, luck: 2, endurance: 2 },
+  ISTP: { dexterity: 5, agility: 4, perception: 3, strength: 2 },
+  ISFP: { agility: 4, dexterity: 4, luck: 3, charisma: 2 },
+  ESTP: { strength: 4, agility: 4, luck: 3, charisma: 2 },
+  ESFP: { charisma: 4, agility: 4, luck: 4, vitality: 2 },
+};
+
+export function getClassMBTIAffinities(cls: ClassDefinition): MBTIType[] {
+  return MBTI_TYPES
+    .map((mbti, index) => {
+      const preferences = MBTI_STAT_PROFILES[mbti];
+      const statScore = cls.primaryStats.reduce((sum, stat) => sum + (preferences[stat] || 0) * 2, 0)
+        + cls.secondaryStats.reduce((sum, stat) => sum + (preferences[stat] || 0), 0);
+      const explicitScore = getMBTIClassAffinity(mbti, cls);
+      return { mbti, score: statScore + explicitScore * 2, index };
+    })
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .slice(0, 3)
+    .map(({ mbti }) => mbti);
 }
 
 function getMBTIClassAffinity(mbti: MBTIType, cls: ClassDefinition): number {

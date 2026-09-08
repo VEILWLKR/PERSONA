@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { BookOpen, Map, Settings, Shield, Sparkles, Sword, Upload } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
+import { CLASS_COUNT } from '@/data/classes';
 
 export function TitleScreen() {
   const { setScreen, saveSlots, resetAssessment } = useGameStore();
@@ -43,7 +44,7 @@ export function TitleScreen() {
             {[
               { icon: Sparkles, label: '20 questions' },
               { icon: Shield, label: '8 ranks' },
-              { icon: Map, label: '100 classes' },
+              { icon: Map, label: `${CLASS_COUNT} classes` },
             ].map((item) => (
               <div key={item.label} className="panel-fantasy-inner flex items-center gap-3 px-4 py-3">
                 <item.icon className="h-4 w-4 text-teal-200" />
@@ -99,6 +100,16 @@ export function TitleScreen() {
             >
               <Settings className="h-5 w-5" />
               Settings
+            </motion.button>
+
+            <motion.button
+              onClick={() => setScreen('classes')}
+              className="btn-fantasy-secondary flex items-center justify-center gap-3 rounded-md px-6 py-3"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <BookOpen className="h-5 w-5" />
+              View All Classes
             </motion.button>
           </div>
 

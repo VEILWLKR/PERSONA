@@ -1,4 +1,5 @@
 import type { ClassDefinition } from '@/types/game';
+import { VAELITH_CLASSES } from '@/data/vaelithClasses';
 
 export const CLASS_DATABASE: ClassDefinition[] = [
   // ==================== COMMON (28) ====================
@@ -2008,6 +2009,8 @@ export const CLASS_DATABASE: ClassDefinition[] = [
     loreEntry: 'In the beginning, I said "let there be." And there was.',
   },
 ];
+
+CLASS_DATABASE.push(...VAELITH_CLASSES);
 
 export function getClassById(id: string): ClassDefinition | undefined {
   return CLASS_DATABASE.find(c => c.id === id);

@@ -94,6 +94,8 @@ export interface MBTIDimensions {
 export interface ClassDefinition {
   id: string;
   name: string;
+  icon?: string;
+  playstyle?: string;
   tier: ClassTier;
   description: string;
   lore: string;
@@ -148,6 +150,7 @@ export interface CharacterData {
   exp: number;
   expToNext: number;
   classId: string;
+  subclassId: string;
   rank: Rank;
   stats: CharacterStats;
   personality: PersonalityProfile;
@@ -204,8 +207,14 @@ export interface AssessmentQuestion {
 
 export interface DestinyResult {
   classId: string;
+  classCandidates?: string[];
+  subclassId: string;
+  subclassCandidates?: string[];
   rank: Rank;
   stats: CharacterStats;
+  zodiac: ZodiacSign;
+  chineseZodiac: ChineseZodiac;
+  birthYear: number;
   region: Region;
   storyArc: StoryArc;
   personality: PersonalityProfile;

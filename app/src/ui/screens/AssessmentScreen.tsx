@@ -3,12 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Sparkles, Brain, Heart, Eye } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
 import { ASSESSMENT_QUESTIONS } from '@/data/questions';
-import { computePersonality } from '@/engines/personalityEngine';
-import { generateDestiny } from '@/engines/destinyEngine';
 import type { AssessmentAnswer } from '@/types/game';
 
 export function AssessmentScreen() {
-  const { addAnswer, assessmentAnswers, setDestinyResult, setScreen } = useGameStore();
+  const { addAnswer, assessmentAnswers, setScreen } = useGameStore();
   const [currentQ, setCurrentQ] = useState(0);
   const [direction, setDirection] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
@@ -48,23 +46,6 @@ export function AssessmentScreen() {
 
   const finishAssessment = () => {
     setIsComplete(true);
-    const allAnswers = useGameStore.getState().assessmentAnswers;
-    const { profile, mbti, mbtiDimensions } = computePersonality(allAnswers);
-
-    // Get birth info from defaults (will be set in creation screen)
-    const destiny = generateDestiny({
-      personality: profile,
-      mbti,
-      mbtiDimensions,
-      zodiac: null,
-      chineseZodiac: null,
-      birthMonth: 1,
-      birthDay: 1,
-      favoriteColor: 'blue',
-    });
-
-    setDestinyResult(destiny);
-
     setTimeout(() => {
       setScreen('creation');
     }, 1500);

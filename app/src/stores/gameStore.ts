@@ -31,7 +31,7 @@ const idbStorage = {
 
 interface GameState {
   // Navigation
-  currentScreen: 'title' | 'assessment' | 'creation' | 'reveal' | 'summary' | 'settings' | 'load';
+  currentScreen: 'title' | 'assessment' | 'creation' | 'classChoice' | 'reveal' | 'summary' | 'settings' | 'load' | 'classes';
   setScreen: (screen: GameState['currentScreen']) => void;
 
   // Assessment
@@ -43,6 +43,11 @@ interface GameState {
   // Destiny
   destinyResult: DestinyResult | null;
   setDestinyResult: (result: DestinyResult) => void;
+
+  // Character details are held until the player selects a path.
+  pendingCharacter: { name: string; appearance: CharacterAppearance } | null;
+  setPendingCharacter: (name: string, appearance: CharacterAppearance) => void;
+  clearPendingCharacter: () => void;
 
   // Character
   character: CharacterData | null;
@@ -77,6 +82,7 @@ const initialState = {
   assessmentAnswers: [] as AssessmentAnswer[],
   assessmentProgress: 0,
   destinyResult: null as DestinyResult | null,
+  pendingCharacter: null as { name: string; appearance: CharacterAppearance } | null,
   character: null as CharacterData | null,
   settings: { ...DEFAULT_SETTINGS },
   saveSlots: [] as SaveSlot[],
@@ -116,6 +122,9 @@ export const useGameStore = create<GameState>()(
 
       setDestinyResult: (result) => set({ destinyResult: result }),
 
+      setPendingCharacter: (name, appearance) => set({ pendingCharacter: { name, appearance } }),
+      clearPendingCharacter: () => set({ pendingCharacter: null }),
+
       createCharacter: (name, appearance) => {
         const state = get();
         if (!state.destinyResult) return;
@@ -128,13 +137,14 @@ export const useGameStore = create<GameState>()(
           exp: 0,
           expToNext: 100,
           classId: state.destinyResult.classId,
+          subclassId: state.destinyResult.subclassId,
           rank: state.destinyResult.rank,
           stats: state.destinyResult.stats,
           personality: state.destinyResult.personality,
           mbti: state.destinyResult.mbti,
           mbtiDimensions: state.destinyResult.mbtiDimensions,
-          zodiac: null,
-          chineseZodiac: null,
+          zodiac: state.destinyResult.zodiac,
+          chineseZodiac: state.destinyResult.chineseZodiac,
           region: state.destinyResult.region,
           storyArc: state.destinyResult.storyArc,
           reputation: state.destinyResult.reputation,
@@ -143,12 +153,19 @@ export const useGameStore = create<GameState>()(
         };
 
         set({ character: char });
+        set({ pendingCharacter: null });
+        if (state.settings.autoSave) get().saveGame();
       },
 
-      updateSettings: (newSettings) =>
+      updateSettings: (newSettings) => {
+        const currentSettings = get().settings;
         set((state) => ({
           settings: { ...state.settings, ...newSettings },
-        })),
+        }));
+        if (newSettings.autoSave === true && !currentSettings.autoSave && get().character) {
+          get().saveGame();
+        }
+      },
 
       saveGame: () => {
         const state = get();
@@ -202,6 +219,7 @@ export const useGameStore = create<GameState>()(
         saveSlots: state.saveSlots,
         character: state.character,
         destinyResult: state.destinyResult,
+        pendingCharacter: state.pendingCharacter,
       }),
     }
   )

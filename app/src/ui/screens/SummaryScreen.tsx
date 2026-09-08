@@ -8,6 +8,7 @@ import { useGameStore } from '@/stores/gameStore';
 import { CLASS_DATABASE } from '@/data/classes';
 import { getTierColor } from '@/engines/destinyEngine';
 import { getMBTIDescription, getPersonalityArchetype } from '@/engines/personalityEngine';
+import { getSubclassById } from '@/data/subclasses';
 import type { CharacterStats } from '@/types/game';
 
 const STAT_LABELS: Record<string, string> = {
@@ -61,7 +62,13 @@ export function SummaryScreen() {
   }
 
   const classDef = CLASS_DATABASE.find(c => c.id === character.classId);
-  if (!classDef) return null;
+  const subclassDef = getSubclassById(character.subclassId) ?? (() => {
+    const subclassClass = CLASS_DATABASE.find((candidate) => candidate.id === character.subclassId);
+    return subclassClass
+      ? { name: subclassClass.name, description: subclassClass.description }
+      : undefined;
+  })();
+  if (!classDef || !subclassDef) return null;
 
   const tierColor = getTierColor(classDef.tier);
   const archetype = getPersonalityArchetype(character.personality);
@@ -99,7 +106,7 @@ export function SummaryScreen() {
             {character.name}
           </h1>
           <p className="fantasy-heading text-sm" style={{ color: tierColor }}>
-            {classDef.name} &middot; {character.rank} Rank &middot; {classDef.tier}
+            {classDef.name} / {subclassDef.name} &middot; {character.rank} Rank &middot; {classDef.tier}
           </p>
         </motion.div>
 
@@ -181,6 +188,11 @@ export function SummaryScreen() {
                   <Sword className="w-5 h-5 mx-auto mb-1" style={{ color: tierColor }} />
                   <p className="fantasy-heading text-xs text-amber-200/50">Class</p>
                   <p className="fantasy-heading text-sm" style={{ color: tierColor }}>{classDef.tier}</p>
+                </div>
+                <div className="text-center panel-fantasy-inner p-3">
+                  <Sparkles className="w-5 h-5 text-amber-400 mx-auto mb-1" />
+                  <p className="fantasy-heading text-xs text-amber-200/50">Subclass</p>
+                  <p className="fantasy-heading text-xs text-amber-200">{subclassDef.name}</p>
                 </div>
                 <div className="text-center panel-fantasy-inner p-3">
                   <MapPin className="w-5 h-5 text-blue-400 mx-auto mb-1" />
@@ -286,6 +298,12 @@ export function SummaryScreen() {
               <p className="fantasy-text text-amber-100/70 text-center">
                 {classDef.description}
               </p>
+
+              <div className="panel-fantasy-inner p-4">
+                <h4 className="fantasy-heading text-xs text-amber-200/50 uppercase mb-2">Personality Subclass</h4>
+                <p className="fantasy-heading text-lg text-amber-200">{subclassDef.name}</p>
+                <p className="fantasy-text text-sm text-amber-100/60">{subclassDef.description}</p>
+              </div>
 
               <div className="divider-fantasy" />
 

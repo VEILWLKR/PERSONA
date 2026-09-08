@@ -6,12 +6,21 @@ import { CLASS_DATABASE } from '@/data/classes';
 import { RANK_DEFINITIONS } from '@/systems/rankSystem';
 import { getTierColor, getTierGlow } from '@/engines/destinyEngine';
 import { getMBTIDescription } from '@/engines/personalityEngine';
+import { getSubclassById } from '@/data/subclasses';
 
 export function RevealScreen() {
   const { destinyResult, character, setScreen } = useGameStore();
   const [phase, setPhase] = useState<'intro' | 'tier' | 'class' | 'details' | 'complete'>('intro');
 
   const classDef = destinyResult ? CLASS_DATABASE.find(c => c.id === destinyResult.classId) : null;
+  const subclassDef = destinyResult
+    ? getSubclassById(destinyResult.subclassId) ?? (() => {
+        const subclassClass = CLASS_DATABASE.find((classDef) => classDef.id === destinyResult.subclassId);
+        return subclassClass
+          ? { name: subclassClass.name, description: subclassClass.description }
+          : undefined;
+      })()
+    : null;
 
   useEffect(() => {
     if (!destinyResult) {
@@ -29,7 +38,7 @@ export function RevealScreen() {
     return () => timers.forEach(clearTimeout);
   }, [destinyResult, setScreen]);
 
-  if (!destinyResult || !classDef) return null;
+  if (!destinyResult || !classDef || !subclassDef) return null;
 
   const tierColor = getTierColor(classDef.tier);
   const tierGlow = getTierGlow(classDef.tier);
@@ -177,6 +186,17 @@ export function RevealScreen() {
                 <div className="divider-fantasy" />
 
                 <div className="flex items-start gap-3">
+                  <Sparkles className="w-5 h-5 text-amber-400 mt-0.5" />
+                  <div>
+                    <span className="fantasy-heading text-xs text-amber-200/50 uppercase">Subclass</span>
+                    <p className="fantasy-text text-lg text-amber-200">{subclassDef.name}</p>
+                    <p className="fantasy-text text-sm text-amber-100/60">{subclassDef.description}</p>
+                  </div>
+                </div>
+
+                <div className="divider-fantasy" />
+
+                <div className="flex items-start gap-3">
                   <Scroll className="w-5 h-5 text-amber-400 mt-0.5" />
                   <div>
                     <span className="fantasy-heading text-xs text-amber-200/50 uppercase">Personality</span>
@@ -226,7 +246,7 @@ export function RevealScreen() {
                   <Sparkles className="w-12 h-12 mx-auto" style={{ color: tierColor }} />
                 </motion.div>
                 <h2 className="fantasy-title text-3xl text-amber-300 mb-1">
-                  {character?.name}, the {classDef.name}
+                  {character?.name}, the                   {classDef.name} / {subclassDef.name}
                 </h2>
                 <p className="fantasy-heading text-sm" style={{ color: tierColor }}>
                   {destinyResult.rank} Rank &middot; {classDef.tier} Class
