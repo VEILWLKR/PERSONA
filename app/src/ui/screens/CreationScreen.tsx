@@ -8,6 +8,18 @@ import { calculateChineseZodiac, calculateZodiac } from '@/engines/zodiacEngine'
 import type { CharacterAppearance } from '@/types/game';
 
 const DEFAULT_APPEARANCE: CharacterAppearance = {
+  skinId: 'skin_warm',
+  eyesId: 'eyes_round',
+  eyebrowsId: 'brows_soft',
+  hairId: 'hair_plain_front',
+  shirtId: 'shirt_overalls',
+  pantsId: 'pants_denim',
+  shoesId: 'shoes_boots',
+  accessoryId: 'accessory_none',
+  headwearId: 'headwear_none',
+  expressionId: 'expression_smile',
+  direction: 'down',
+  frame: 0,
   gender: 'NonBinary',
   hairStyle: 0,
   hairColor: '#DAA520',
@@ -15,6 +27,7 @@ const DEFAULT_APPEARANCE: CharacterAppearance = {
   eyeColor: '#4682B4',
   faceType: 1,
   outfitColor: '#4a2c2a',
+  accessory: 'none',
 };
 
 const TODAY = new Date().toISOString().split('T')[0];
@@ -46,7 +59,7 @@ export function CreationScreen() {
 
     setDestinyResult(destiny);
     setPendingCharacter(name.trim(), DEFAULT_APPEARANCE);
-    setScreen('classChoice');
+    setScreen('appearance');
   };
 
   const canProceed = name.trim().length >= 2 && birthDate.length > 0 && birthDate <= TODAY;

@@ -33,9 +33,12 @@ export function ClassChoiceScreen() {
 
   if (!destinyResult || !pendingCharacter) return null;
 
-  const candidateIds = destinyResult.classCandidates?.length
-    ? destinyResult.classCandidates
-    : CLASS_DATABASE.slice(0, 3).map((classDef) => classDef.id);
+  const storedCandidateIds = destinyResult.classCandidates?.filter((id) => id !== destinyResult.classId) ?? [];
+  const fallbackCandidateIds = CLASS_DATABASE
+    .filter((classDef) => classDef.id !== destinyResult.classId)
+    .slice(0, 3)
+    .map((classDef) => classDef.id);
+  const candidateIds = [...new Set([...storedCandidateIds, ...fallbackCandidateIds])].slice(0, 3);
   const candidates = candidateIds
     .map((id) => CLASS_DATABASE.find((classDef) => classDef.id === id))
     .filter((classDef): classDef is ClassDefinition => Boolean(classDef));

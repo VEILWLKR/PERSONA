@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, Save, RotateCcw, User, Brain, Sword, Shield,
-  Sparkles, MapPin, BookOpen, ChevronRight, Heart,
+  Sparkles, Map, MapPin, BookOpen, ChevronRight, Heart,
 } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
 import { CLASS_DATABASE } from '@/data/classes';
@@ -445,6 +445,14 @@ export function SummaryScreen() {
           >
             <Save className="w-4 h-4" />
             {saved ? 'Character Saved!' : 'Save Character'}
+          </button>
+
+          <button
+            onClick={() => setScreen('worldMap')}
+            className="btn-fantasy w-full py-3 rounded-lg flex items-center justify-center gap-2 fantasy-heading"
+          >
+            <Map className="w-4 h-4" />
+            Explore the World Map
           </button>
 
           <button

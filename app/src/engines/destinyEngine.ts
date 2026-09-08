@@ -71,7 +71,7 @@ export function generateDestiny(input: DestinyInput): DestinyResult {
 
   return {
     classId,
-    classCandidates: getTopClassCandidates(input).map((candidate) => candidate.id),
+    classCandidates: getTopClassCandidates(input, classId).map((candidate) => candidate.id),
     subclassId,
     subclassCandidates,
     rank,
@@ -104,9 +104,11 @@ function getAffinityScore(input: DestinyInput, cls: ClassDefinition): number {
   return score;
 }
 
-export function getTopClassCandidates(input: DestinyInput): ClassDefinition[] {
+export function getTopClassCandidates(input: DestinyInput, excludedClassId?: string): ClassDefinition[] {
   const compatibleClasses = CLASS_DATABASE.filter((cls) => getClassMBTIAffinities(cls).includes(input.mbti));
-  const roster = compatibleClasses.length >= 3 ? compatibleClasses : CLASS_DATABASE;
+  const compatibleOptions = compatibleClasses.filter((cls) => cls.id !== excludedClassId);
+  const fallbackOptions = CLASS_DATABASE.filter((cls) => cls.id !== excludedClassId);
+  const roster = compatibleOptions.length >= 3 ? compatibleOptions : fallbackOptions;
 
   return roster
     .map((cls, index) => ({ cls, score: getAffinityScore(input, cls), index }))

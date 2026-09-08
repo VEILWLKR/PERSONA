@@ -4,6 +4,7 @@ import { useGameStore } from '@/stores/gameStore';
 import { CLASS_DATABASE } from '@/data/classes';
 import { getTierColor } from '@/engines/destinyEngine';
 import type { ClassDefinition, ClassTier, StatName } from '@/types/game';
+import catalogue from '@/data/classAbilityCatalogue.json';
 
 const TIERS: ClassTier[] = ['Common', 'Rare', 'Epic', 'Legendary', 'Hidden', 'Mythical'];
 const STATS: StatName[] = ['strength', 'agility', 'intelligence', 'vitality', 'luck', 'charisma', 'wisdom', 'dexterity', 'endurance', 'perception'];
@@ -13,6 +14,19 @@ const RARITY_COUNTS: Record<ClassTier, number> = { Common: 2, Rare: 3, Epic: 4, 
 const UNLOCK_LEVELS = [1, 4, 8, 13, 19, 26, 34];
 
 type CodexMove = { name: string; level: number; detail: string };
+type CatalogueMove = { level: number | null; name: string; description: string; target?: string; type?: string };
+type CatalogueEntry = {
+  identity: string;
+  startingKit: Array<{ name: string; category: string; description: string }>;
+  attacks: CatalogueMove[];
+  skills: CatalogueMove[];
+  spells: CatalogueMove[];
+  abilities: CatalogueMove[];
+  outOfCombat: CatalogueMove[];
+  signatures: CatalogueMove[];
+  ultimate: CatalogueMove[];
+};
+const CLASS_CATALOGUE = catalogue as Record<string, CatalogueEntry>;
 
 function getRole(classDefinition: ClassDefinition) {
   const playstyle = classDefinition.playstyle?.toLowerCase() ?? '';
@@ -40,6 +54,20 @@ function isWeaponFocused(classDefinition: ClassDefinition) {
 }
 
 function getCodexMoves(classDefinition: ClassDefinition) {
+  const catalogueEntry = CLASS_CATALOGUE[classDefinition.name];
+  if (catalogueEntry) {
+    const fromCatalogue = (moves: CatalogueMove[]) => moves.map((move) => ({
+      name: move.name,
+      level: move.level ?? 1,
+      detail: [move.description, move.target && `Target: ${move.target}.`, move.type && `Type: ${move.type}.`].filter(Boolean).join(' '),
+    }));
+    return {
+      attacks: fromCatalogue(catalogueEntry.attacks),
+      abilities: fromCatalogue([...catalogueEntry.skills, ...catalogueEntry.abilities, ...catalogueEntry.outOfCombat, ...catalogueEntry.signatures]),
+      spells: fromCatalogue(catalogueEntry.spells),
+    };
+  }
+
   const identity = classDefinition.name.replace(/^(The |A |An )/i, '');
   const count = RARITY_COUNTS[classDefinition.tier];
   const weaponFocused = isWeaponFocused(classDefinition);
@@ -113,25 +141,40 @@ function RaceList({ races }: { races: string[] }) {
     : <DetailList items={races} />;
 }
 
+function stripMarkdown(value: string) {
+  return value.replace(/\*\*/g, '');
+}
+
 function ClassEntry({ classDefinition }: { classDefinition: ClassDefinition }) {
   const tierColor = getTierColor(classDefinition.tier);
   const role = getRole(classDefinition);
   const races = getAvailableRaces(classDefinition);
   const { attacks, abilities, spells } = getCodexMoves(classDefinition);
+  const catalogueEntry = CLASS_CATALOGUE[classDefinition.name];
+  const catalogueAbilities = catalogueEntry
+    ? [...catalogueEntry.skills, ...catalogueEntry.abilities, ...catalogueEntry.outOfCombat, ...catalogueEntry.signatures, ...catalogueEntry.ultimate]
+    : [];
+  const displayedAbilities = catalogueEntry
+    ? catalogueAbilities.map((move) => ({
+      name: move.name,
+      level: move.level ?? 1,
+      detail: [move.description, move.target && `Target: ${move.target}.`, move.type && `Type: ${move.type}.`].filter(Boolean).join(' '),
+    }))
+    : abilities;
   return (
     <details className="panel-fantasy-inner group relative" style={{ borderColor: `${tierColor}35` }}>
       <summary className="flex cursor-pointer list-none items-center gap-3 p-4 [&::-webkit-details-marker]:hidden">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border" style={{ borderColor: `${tierColor}70`, color: tierColor }}><Swords className="h-5 w-5" /></div>
-        <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-x-2 gap-y-1"><h2 className="fantasy-heading text-base text-amber-100">{classDefinition.name}</h2><span className="text-[10px] uppercase tracking-wider" style={{ color: tierColor }}>{classDefinition.tier}</span></div><p className="mt-1 truncate fantasy-text text-xs text-amber-100/50">{classDefinition.description}</p></div>
+        <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-x-2 gap-y-1"><h2 className="fantasy-heading text-base text-amber-100">{classDefinition.name}</h2><span className="text-[10px] uppercase tracking-wider" style={{ color: tierColor }}>{classDefinition.tier}</span></div><p className="mt-1 truncate fantasy-text text-xs text-amber-100/50">{catalogueEntry ? stripMarkdown(catalogueEntry.identity) : classDefinition.description}</p></div>
         <span className="hidden shrink-0 text-[10px] uppercase tracking-wider text-teal-200/60 sm:block">{role}</span><ChevronDown className="h-4 w-4 shrink-0 text-amber-200/45 transition-transform group-open:rotate-180" />
       </summary>
       <div className="border-t border-white/10 bg-black/15 p-4"><div className="grid gap-4 xl:grid-cols-3">
         <section><h3 className="mb-2 flex items-center gap-2 fantasy-heading text-xs uppercase tracking-wider text-amber-300"><Shield className="h-3.5 w-3.5" />Base profile</h3><div className="space-y-3"><div className="flex flex-wrap gap-1.5">{classDefinition.primaryStats.map((stat) => <span key={stat} className="rounded border border-amber-300/35 bg-amber-300/10 px-2 py-1 text-[10px] text-amber-200">Primary: {formatLabel(stat)}</span>)}{classDefinition.secondaryStats.map((stat) => <span key={stat} className="rounded border border-teal-300/20 bg-teal-300/5 px-2 py-1 text-[10px] text-teal-100/70">Secondary: {formatLabel(stat)}</span>)}</div><div className="space-y-2">{STATS.filter((stat) => classDefinition.baseStatModifiers[stat] !== undefined).map((stat) => { const value = classDefinition.baseStatModifiers[stat] ?? 0; return <div key={stat}><div className="mb-1 flex justify-between fantasy-text text-[10px] text-amber-100/60"><span>{formatLabel(stat)}</span><strong className="text-amber-200">+{value}</strong></div><div className="h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-teal-300" style={{ width: `${Math.min(100, value * 4)}%` }} /></div></div>; })}</div><div className="border-t border-white/10 pt-2"><p className="mb-1 fantasy-heading text-[10px] uppercase tracking-wider text-amber-100/40">Passives</p><DetailList items={classDefinition.passives.map((passive) => `${passive.name}: ${passive.description} (${passive.trigger})`)} /></div></div></section>
         <section><h3 className="mb-2 flex items-center gap-2 fantasy-heading text-xs uppercase tracking-wider text-amber-300"><Swords className="h-3.5 w-3.5" />Attacks by level</h3><MoveList moves={attacks} accent="#f5c76b" /></section>
-        <section><h3 className="mb-2 flex items-center gap-2 fantasy-heading text-xs uppercase tracking-wider text-amber-300"><Shield className="h-3.5 w-3.5" />Abilities by level</h3><MoveList moves={abilities} accent="#7dd3c7" /></section>
+        <section><h3 className="mb-2 flex items-center gap-2 fantasy-heading text-xs uppercase tracking-wider text-amber-300"><Shield className="h-3.5 w-3.5" />Abilities by level</h3><MoveList moves={displayedAbilities} accent="#7dd3c7" /></section>
         <section><h3 className="mb-2 flex items-center gap-2 fantasy-heading text-xs uppercase tracking-wider text-amber-300"><Sparkles className="h-3.5 w-3.5" />Spells by level</h3><MoveList moves={spells} accent="#a78bfa" /></section>
         <section className="xl:col-span-2"><h3 className="mb-2 flex items-center gap-2 fantasy-heading text-xs uppercase tracking-wider text-amber-300"><Users className="h-3.5 w-3.5" />Availability &amp; progression</h3><div className="grid gap-3 sm:grid-cols-3"><div><p className="mb-1 fantasy-heading text-[10px] uppercase text-amber-100/40">Races</p><RaceList races={races} /></div><div><p className="mb-1 fantasy-heading text-[10px] uppercase text-amber-100/40">Evolution</p><p className="fantasy-text text-xs text-amber-100/65">{getEvolutionName(classDefinition)}</p></div><div><p className="mb-1 fantasy-heading text-[10px] uppercase text-amber-100/40">Restrictions</p><DetailList items={classDefinition.restrictions.filter((restriction) => restriction !== 'None')} empty="Open access" /></div></div></section>
-        <section><h3 className="mb-2 fantasy-heading text-xs uppercase tracking-wider text-amber-300">Starting kit</h3><DetailList items={classDefinition.startingEquipment} /></section>
+        <section><h3 className="mb-2 fantasy-heading text-xs uppercase tracking-wider text-amber-300">Starting kit</h3><DetailList items={catalogueEntry?.startingKit.map((item) => `${item.name}: ${item.description}`) ?? classDefinition.startingEquipment} /></section>
       </div></div>
     </details>
   );

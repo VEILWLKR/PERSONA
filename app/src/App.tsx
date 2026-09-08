@@ -5,12 +5,14 @@ import { ParticleBackground } from '@/ui/components/ParticleBackground';
 import { TitleScreen } from '@/ui/screens/TitleScreen';
 import { AssessmentScreen } from '@/ui/screens/AssessmentScreen';
 import { CreationScreen } from '@/ui/screens/CreationScreen';
+import { AppearanceScreen } from '@/ui/screens/AppearanceScreen';
 import { RevealScreen } from '@/ui/screens/RevealScreen';
 import { ClassChoiceScreen } from '@/ui/screens/ClassChoiceScreen';
 import { SummaryScreen } from '@/ui/screens/SummaryScreen';
 import { SettingsScreen } from '@/ui/screens/SettingsScreen';
 import { LoadGameScreen } from '@/ui/screens/LoadGameScreen';
 import { ClassesScreen } from '@/ui/screens/ClassesScreen';
+import { WorldMapScreen } from '@/ui/screens/WorldMapScreen';
 
 function ScreenTransition({ children, duration }: { children: React.ReactNode; duration: number }) {
   return (
@@ -57,6 +59,12 @@ function App() {
             <CreationScreen />
           </ScreenTransition>
         );
+      case 'appearance':
+        return (
+          <ScreenTransition key="appearance" duration={transitionDuration}>
+            <AppearanceScreen />
+          </ScreenTransition>
+        );
       case 'reveal':
         return (
           <ScreenTransition key="reveal" duration={transitionDuration}>
@@ -97,6 +105,12 @@ function App() {
         return (
           <ScreenTransition key="title" duration={transitionDuration}>
             <TitleScreen />
+          </ScreenTransition>
+        );
+      case 'worldMap':
+        return (
+          <ScreenTransition key="worldMap" duration={transitionDuration}>
+            <WorldMapScreen />
           </ScreenTransition>
         );
     }

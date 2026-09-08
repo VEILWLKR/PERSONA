@@ -166,6 +166,18 @@ export interface CharacterData {
 }
 
 export interface CharacterAppearance {
+  skinId?: string;
+  eyesId?: string;
+  eyebrowsId?: string;
+  hairId?: string;
+  shirtId?: string;
+  pantsId?: string;
+  shoesId?: string;
+  accessoryId?: string;
+  headwearId?: string;
+  expressionId?: string;
+  direction?: 'down' | 'up' | 'left' | 'right';
+  frame?: number;
   gender: 'Male' | 'Female' | 'NonBinary';
   hairStyle: number;
   hairColor: string;
@@ -173,6 +185,7 @@ export interface CharacterAppearance {
   eyeColor: string;
   faceType: number;
   outfitColor: string;
+  accessory?: 'none' | 'glasses' | 'cap' | 'scarf' | 'earrings';
 }
 
 export interface ReputationState {

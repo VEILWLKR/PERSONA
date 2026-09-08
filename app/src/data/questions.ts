@@ -39,7 +39,7 @@ export const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
     text: 'What drives you to adventure?',
     category: 'curiosity',
     options: [
-      { text: 'The thrill of discovery and new experiences.', values: { curiosity: 10, chaos: 4, independence: 5 } },
+      { text: 'The thrill of discovery and new experiences.', values: { curiosity: 10, chaos: 4, independence: 5, luck: 6 } },
       { text: 'The desire to help others and do good.', values: { empathy: 8, honor: 6, spirituality: 4 } },
       { text: 'The pursuit of power and wealth.', values: { aggression: 5, cunning: 5, independence: 4 } },
       { text: 'Following a divine calling or prophecy.', values: { spirituality: 10, order: 5, honor: 4 } },
@@ -108,7 +108,7 @@ export const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
       { text: 'A hero who saved the world.', values: { honor: 8, empathy: 6, courage: 5 } },
       { text: 'A wise ruler who brought peace.', values: { wisdom: 8, order: 6, charisma: 4 } },
       { text: 'A free spirit who lived by their own rules.', values: { chaos: 8, independence: 6, curiosity: 4 } },
-      { text: 'A mysterious legend whispered for ages.', values: { cunning: 6, spirituality: 5, independence: 4 } },
+      { text: 'A mysterious legend whispered for ages.', values: { cunning: 6, spirituality: 5, independence: 4, luck: 5 } },
     ],
   },
   {
@@ -152,7 +152,7 @@ export const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
       { text: 'I forge my own destiny.', values: { independence: 10, courage: 5, chaos: 4 } },
       { text: 'I follow the path laid before me.', values: { order: 8, spirituality: 6, honor: 4 } },
       { text: 'I seek to understand fate\'s design.', values: { curiosity: 6, wisdom: 5, spirituality: 5 } },
-      { text: 'I manipulate fate to my advantage.', values: { cunning: 8, chaos: 5, intelligence: 3 } },
+      { text: 'I manipulate fate to my advantage.', values: { cunning: 8, chaos: 5, intelligence: 3, luck: 5 } },
     ],
   },
   {
@@ -218,7 +218,7 @@ export const ASSESSMENT_QUESTIONS: AssessmentQuestion[] = [
       { text: 'Plan the next day\'s adventure meticulously.', values: { order: 8, perception: 4, wisdom: 3 }, mbtiDimension: 'jp', mbtiValue: 10 },
       { text: 'Chat with strangers and make new friends.', values: { charisma: 8, empathy: 4, courage: 3 }, mbtiDimension: 'jp', mbtiValue: -6 },
       { text: 'Listen to stories and rumors.', values: { curiosity: 6, perception: 4, wisdom: 3 }, mbtiDimension: 'jp', mbtiValue: 4 },
-      { text: 'See where the night takes you.', values: { chaos: 6, curiosity: 5, independence: 4 }, mbtiDimension: 'jp', mbtiValue: -10 },
+      { text: 'See where the night takes you.', values: { chaos: 6, curiosity: 5, independence: 4, luck: 10 }, mbtiDimension: 'jp', mbtiValue: -10 },
     ],
   },
 ];

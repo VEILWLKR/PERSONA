@@ -111,6 +111,16 @@ export function TitleScreen() {
               <BookOpen className="h-5 w-5" />
               View All Classes
             </motion.button>
+
+            <motion.button
+              onClick={() => setScreen('worldMap')}
+              className="btn-fantasy-secondary flex items-center justify-center gap-3 rounded-md px-6 py-3"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Map className="h-5 w-5" />
+              Explore the World Map
+            </motion.button>
           </div>
 
           <div className="divider-fantasy my-6" />

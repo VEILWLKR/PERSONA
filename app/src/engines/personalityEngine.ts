@@ -94,23 +94,22 @@ export function getMBTIDescription(type: MBTIType): string {
 }
 
 export function getPersonalityArchetype(profile: PersonalityProfile): string {
-  const scores = [
-    { trait: 'aggression', score: profile.aggression },
-    { trait: 'empathy', score: profile.empathy },
-    { trait: 'curiosity', score: profile.curiosity },
-    { trait: 'honor', score: profile.honor },
-    { trait: 'chaos', score: profile.chaos },
-    { trait: 'order', score: profile.order },
-    { trait: 'courage', score: profile.courage },
-    { trait: 'cunning', score: profile.cunning },
-    { trait: 'spirituality', score: profile.spirituality },
-    { trait: 'independence', score: profile.independence },
-  ];
+  const scores = Object.entries(profile).map(([trait, value]) => ({
+    trait,
+    // Personality starts at five, so compare the player's choices against
+    // that neutral baseline instead of letting the first tied trait win.
+    score: value - 5,
+  }));
 
-  scores.sort((a, b) => b.score - a.score);
+  const highestScore = Math.max(...scores.map(({ score }) => score));
+  if (highestScore <= 0) return 'The Enigma';
 
-  const top = scores[0].trait;
-  const second = scores[1].trait;
+  const contenders = scores.filter(({ score }) => highestScore - score <= 0.5);
+  const top = contenders
+    .sort((a, b) => b.score - a.score || b.trait.localeCompare(a.trait))[0].trait;
+  const second = scores
+    .filter(({ trait }) => trait !== top)
+    .sort((a, b) => b.score - a.score || b.trait.localeCompare(a.trait))[0]?.trait;
 
   const archetypes: Record<string, string> = {
     aggression: 'The Conqueror',
@@ -123,6 +122,10 @@ export function getPersonalityArchetype(profile: PersonalityProfile): string {
     cunning: 'The Schemer',
     spirituality: 'The Mystic',
     independence: 'The Lone Wolf',
+    intelligence: 'The Sage',
+    agility: 'The Wanderer',
+    endurance: 'The Bastion',
+    luck: 'The Fortunate',
   };
 
   // Special combinations
