@@ -31,7 +31,7 @@ const idbStorage = {
 
 interface GameState {
   // Navigation
-  currentScreen: 'title' | 'assessment' | 'creation' | 'appearance' | 'classChoice' | 'reveal' | 'summary' | 'settings' | 'load' | 'classes' | 'worldMap';
+  currentScreen: 'title' | 'assessment' | 'appearance' | 'classChoice' | 'reveal' | 'summary' | 'settings' | 'load' | 'classes' | 'worldMap';
   setScreen: (screen: GameState['currentScreen']) => void;
 
   // Assessment

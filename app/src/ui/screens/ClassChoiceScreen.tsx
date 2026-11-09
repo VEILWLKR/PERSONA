@@ -15,6 +15,7 @@ import { CLASS_DATABASE } from '@/data/classes';
 import { applySubclassSelection, getTierColor } from '@/engines/destinyEngine';
 import { useGameStore } from '@/stores/gameStore';
 import type { ClassDefinition } from '@/types/game';
+import { SUBCLASS_DATABASE } from '@/data/subclasses';
 
 const iconForClass = (classDef: ClassDefinition) => {
   const stats = [...classDef.primaryStats, ...classDef.secondaryStats];
@@ -33,15 +34,15 @@ export function ClassChoiceScreen() {
 
   if (!destinyResult || !pendingCharacter) return null;
 
-  const storedCandidateIds = destinyResult.classCandidates?.filter((id) => id !== destinyResult.classId) ?? [];
-  const fallbackCandidateIds = CLASS_DATABASE
-    .filter((classDef) => classDef.id !== destinyResult.classId)
+  const storedCandidateIds = destinyResult.subclassCandidates?.filter((id) => id !== destinyResult.subclassId) ?? [];
+  const fallbackCandidateIds = SUBCLASS_DATABASE
+    .filter((subclass) => subclass.id !== destinyResult.subclassId)
     .slice(0, 3)
-    .map((classDef) => classDef.id);
+    .map((subclass) => subclass.id);
   const candidateIds = [...new Set([...storedCandidateIds, ...fallbackCandidateIds])].slice(0, 3);
   const candidates = candidateIds
-    .map((id) => CLASS_DATABASE.find((classDef) => classDef.id === id))
-    .filter((classDef): classDef is ClassDefinition => Boolean(classDef));
+    .map((id) => SUBCLASS_DATABASE.find((subclass) => subclass.id === id))
+    .filter((subclass): subclass is (typeof SUBCLASS_DATABASE)[number] => Boolean(subclass));
   const mainClass = CLASS_DATABASE.find((classDef) => classDef.id === destinyResult.classId);
 
   const chooseSubclass = (subclassId: string) => {
@@ -68,15 +69,15 @@ export function ClassChoiceScreen() {
         </motion.div>
 
         <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6">
-          {candidates.map((classDef, index) => {
-            const Icon = iconForClass(classDef);
+          {candidates.map((subclass, index) => {
+            const Icon = iconForClass(mainClass ?? CLASS_DATABASE[0]);
             const tierColor = mainClass ? getTierColor(mainClass.tier) : '#FBBF24';
 
             return (
               <motion.button
-                key={classDef.id}
+                key={subclass.id}
                 type="button"
-                onClick={() => chooseSubclass(classDef.id)}
+                onClick={() => chooseSubclass(subclass.id)}
                 className="group panel-fantasy text-center p-2 sm:p-4 lg:p-6 h-[min(58vh,430px)] min-h-0 border border-amber-300/15 hover:border-amber-300/60 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-300/70 flex flex-col items-center"
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -95,12 +96,12 @@ export function ClassChoiceScreen() {
                     <p className="fantasy-heading text-[8px] sm:text-[11px] uppercase tracking-[0.12em] sm:tracking-[0.2em]" style={{ color: tierColor }}>
                       {mainClass?.tier ?? 'Destiny'} specialization
                     </p>
-                    <h3 className="fantasy-title text-lg sm:text-2xl text-amber-100 mt-1 break-words">{classDef.name}</h3>
+                    <h3 className="fantasy-title text-lg sm:text-2xl text-amber-100 mt-1 break-words">{subclass.name}</h3>
                   </div>
                 </div>
 
                 <p className="fantasy-text text-[11px] sm:text-sm text-amber-100/60 leading-relaxed mt-3 sm:mt-5 line-clamp-4">
-                  {classDef.description}
+                  {subclass.description}
                 </p>
 
                 <div className="flex items-center justify-center gap-2 mt-auto pt-3 sm:pt-4 border-t border-amber-200/10 w-full">

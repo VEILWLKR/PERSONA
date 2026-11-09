@@ -4,7 +4,6 @@ import { useGameStore } from '@/stores/gameStore';
 import { ParticleBackground } from '@/ui/components/ParticleBackground';
 import { TitleScreen } from '@/ui/screens/TitleScreen';
 import { AssessmentScreen } from '@/ui/screens/AssessmentScreen';
-import { CreationScreen } from '@/ui/screens/CreationScreen';
 import { AppearanceScreen } from '@/ui/screens/AppearanceScreen';
 import { RevealScreen } from '@/ui/screens/RevealScreen';
 import { ClassChoiceScreen } from '@/ui/screens/ClassChoiceScreen';
@@ -51,12 +50,6 @@ function App() {
         return (
           <ScreenTransition key="assessment" duration={transitionDuration}>
             <AssessmentScreen />
-          </ScreenTransition>
-        );
-      case 'creation':
-        return (
-          <ScreenTransition key="creation" duration={transitionDuration}>
-            <CreationScreen />
           </ScreenTransition>
         );
       case 'appearance':

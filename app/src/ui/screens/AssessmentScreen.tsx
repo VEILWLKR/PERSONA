@@ -4,12 +4,25 @@ import { ChevronLeft, Sparkles, Brain, Heart, Eye } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
 import { ASSESSMENT_QUESTIONS } from '@/data/questions';
 import type { AssessmentAnswer } from '@/types/game';
+import type { CharacterAppearance } from '@/types/game';
+import { generateDestiny } from '@/engines/destinyEngine';
+import { computePersonality } from '@/engines/personalityEngine';
+import { calculateChineseZodiac, calculateZodiac } from '@/engines/zodiacEngine';
+
+const DEFAULT_APPEARANCE: CharacterAppearance = {
+  skinId: 'skin_warm', eyesId: 'eyes_round', eyebrowsId: 'brows_soft', hairId: 'hair_plain_front',
+  shirtId: 'shirt_overalls', pantsId: 'pants_denim', shoesId: 'shoes_boots', accessoryId: 'accessory_none',
+  headwearId: 'headwear_none', expressionId: 'expression_smile', direction: 'down', frame: 0,
+  gender: 'NonBinary', hairStyle: 0, hairColor: '#DAA520', skinTone: '#EAC086', eyeColor: '#4682B4',
+  faceType: 1, outfitColor: '#4a2c2a', accessory: 'none',
+};
 
 export function AssessmentScreen() {
-  const { addAnswer, assessmentAnswers, setScreen } = useGameStore();
+  const { addAnswer, assessmentAnswers, setDestinyResult, setPendingCharacter, setScreen } = useGameStore();
   const [currentQ, setCurrentQ] = useState(0);
   const [direction, setDirection] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
+  const [isAnswering, setIsAnswering] = useState(false);
 
   const question = ASSESSMENT_QUESTIONS[currentQ];
   const totalQuestions = ASSESSMENT_QUESTIONS.length;
@@ -18,6 +31,8 @@ export function AssessmentScreen() {
   const existingAnswer = assessmentAnswers.find(a => a.questionId === question.id);
 
   const handleSelect = (optionIndex: number) => {
+    if (isAnswering) return;
+    setIsAnswering(true);
     const answer: AssessmentAnswer = {
       questionId: question.id,
       selectedOption: optionIndex,
@@ -31,8 +46,9 @@ export function AssessmentScreen() {
       if (currentQ < totalQuestions - 1) {
         setDirection(1);
         setCurrentQ(prev => prev + 1);
+        setIsAnswering(false);
       } else {
-        finishAssessment();
+        finishAssessment([...assessmentAnswers.filter((existing) => existing.questionId !== answer.questionId), answer]);
       }
     }, 500);
   };
@@ -44,10 +60,23 @@ export function AssessmentScreen() {
     }
   };
 
-  const finishAssessment = () => {
+  const finishAssessment = (answers: AssessmentAnswer[]) => {
     setIsComplete(true);
+    const { profile, mbti, mbtiDimensions } = computePersonality(answers);
+    setDestinyResult(generateDestiny({
+      personality: profile,
+      mbti,
+      mbtiDimensions,
+      zodiac: calculateZodiac(1, 1),
+      chineseZodiac: calculateChineseZodiac(2000),
+      birthMonth: 1,
+      birthDay: 1,
+      birthYear: 2000,
+      favoriteColor: 'blue',
+    }));
+    setPendingCharacter('Wanderer', DEFAULT_APPEARANCE);
     setTimeout(() => {
-      setScreen('creation');
+      setScreen('appearance');
     }, 1500);
   };
 
@@ -178,7 +207,7 @@ export function AssessmentScreen() {
           <motion.button
             onClick={handleBack}
             className="flex items-center gap-2 text-amber-200/50 hover:text-amber-300 transition-colors disabled:opacity-30"
-            disabled={currentQ === 0}
+            disabled={currentQ === 0 || isAnswering}
             whileHover={{ x: -3 }}
           >
             <ChevronLeft className="w-5 h-5" />

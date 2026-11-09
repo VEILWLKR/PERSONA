@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
 import { ArrowLeft, Compass, MapPin, Navigation, Search, Sparkles, TentTree } from 'lucide-react';
 import { useGameStore } from '@/stores/gameStore';
 import { getWorldRegion, WORLD_REGIONS } from '@/data/worldData';
